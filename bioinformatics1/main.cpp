@@ -1,18 +1,8 @@
 
 #include <stdio.h>
 #include <iostream>
-//#include <memory>
-
 #include "OriReader.h"
 
-
-void printFrequencyMap() {
-	std::unique_ptr<OriReader::FrequencyMap> frequencyMap = OriReader::GenerateFrequencyMap("CGATATATCCATAG", 3);
-	for (auto word = frequencyMap.get()->begin(); word != frequencyMap.get()->end(); ++word)
-	{
-		std::cout << word->first << "  " << word->second << std::endl;
-	}
-}
 
 int main()
 {
@@ -24,10 +14,17 @@ ATTGTTAATTCTCTTGCCTCGACTCATAGCCATGATGAGCTCTTGATCATGTTTCCTTAACCCTCTATTTTTTACGGAAG
 
 	std::string Pattern = "TGATCA";
 
-	std::cout << OriReader::PatternCount(Ori, Pattern) << std::endl;
+	OriReader* m_OriReader = new OriReader();
 
-	printFrequencyMap();
+	std::cout << m_OriReader->PatternCount(Ori, Pattern) << std::endl;
 
+	m_OriReader->GenerateFrequencyMap(Ori, 9);
+
+	//m_OriReader->PrintFrequencyMap();
+
+	m_OriReader->FindMostFrequentWord();
+
+	delete m_OriReader;
 	system("PAUSE");
 	return 0;
 }

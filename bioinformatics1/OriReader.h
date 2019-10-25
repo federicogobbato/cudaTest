@@ -2,19 +2,27 @@
 
 #include <string>
 #include <map>
-#include <memory>
+#include <unordered_map>
 
 class OriReader
 {
 
 public:
 
-    typedef std::map<std::string, int> FrequencyMap;
-
-    OriReader();
+	typedef std::unordered_map<std::string, int> FrequencyMap;
+	OriReader();
     ~OriReader();
 
-    static int PatternCount(const std::string& Text, const std::string& Pattern);
-    static std::unique_ptr<FrequencyMap> GenerateFrequencyMap(const std::string& Text, const int& k);
+    int PatternCount(const std::string& Text, const std::string& Pattern);
+
+    void GenerateFrequencyMap(const std::string& Text, const int& k);
+
+	void PrintFrequencyMap(FrequencyMap* = nullptr);
+
+	void FindMostFrequentWord();
+
+private:
+
+	FrequencyMap* m_FrequencyMap;
 };
 
