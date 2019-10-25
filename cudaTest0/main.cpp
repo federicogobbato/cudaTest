@@ -1,4 +1,6 @@
 #include <curand.h>
+#include <thrust/count.h>
+#include <thrust/device_vector.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,6 +10,7 @@
 #include "utils.h"
 #include "timer.h"
 #include "helper_timer.h"
+
 
 cudaError_t addWithCuda(int *c, const int *a, const int *b, unsigned int size);
 cudaError_t cubeWithCuda(int *c, const int *a, unsigned int size);
@@ -19,7 +22,7 @@ int main()
 {
     srand(time(NULL));
 	const int arraySize = 1 << 26;
-	const int byteSize = arraySize * sizeof(int);
+	const int byteSize = arraySize * sizeof(unsigned int);
 	printf("Size array %d \n", arraySize);
 	unsigned int* h_in = new unsigned int[arraySize];
 	unsigned int h_out;
@@ -32,63 +35,56 @@ int main()
 		int r = std::rand();
 		h_in[i] = r % 10 + 1;
 	}
-	printf("The random serial generation ran in: %f secs.\n\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-
+	printf("The random serial generation ran in %d ticks: %f secs.\n\n", 
+		clock() - tStart, ((double)(clock() - tStart)) / CLOCKS_PER_SEC);
 
 	//--------------------------------------------------------------------------------
 	printf("START PARALLEL RANDOM GENERATION \n");
 	cudaDeviceSynchronize();
-	StopWatchInterface *timerPro = 0;
-	sdkCreateTimer(&timerPro);
-
-	sdkStartTimer(&timerPro);
 	tStart = clock();
-
 	unsigned int* h_inCuda = GenerateRandomNumber(arraySize);
-	sdkStopTimer(&timerPro);
-
-	printf("The random parallel generation ran in: %f secs.\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-	double reduceTime = sdkGetAverageTimerValue(&timerPro) * 1e-3;
-	printf("(CUDA PRO timer) Throughput = %.4f GB/s, Time = %.5f sec \n\n", 1.0e-9 * ((double)byteSize) / reduceTime, reduceTime);
+	printf("The random parallel generation ran in %d ticks: %f secs.\n\n", 
+		clock() - tStart, ((double)(clock() - tStart)) / CLOCKS_PER_SEC);
 
 
 	//--------------------------------------------------------------------------------
 	printf("START SERIAL REDUCE \n");
 	tStart = clock();
-	int result = h_inCuda[0];
+	int result0 = h_in[0];
 	for (int i = 1; i < arraySize; i++) {
-		result += h_inCuda[i];
+		result0 += h_in[i];
 	}
-	printf("The serial code ran in: %f secs.\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-	printf("expected result %d \n\n", result);	
+	printf("The serial code ran in %d ticks: %f secs.\n", 
+		clock() - tStart, ((double)(clock() - tStart)) / CLOCKS_PER_SEC);
+	printf("expected result %d \n\n", result0);	
 
-	
+	//--------------------------------------------------------------------------------
+	printf("START PARALLEL REDUCE (thrust)\n");
+	thrust::device_vector<unsigned int>* temp = new  thrust::device_vector<unsigned int>(h_in, h_in + arraySize);
+	tStart = clock();
+	int result1 = thrust::reduce(temp->begin(), temp->end(), (unsigned int)0, thrust::plus<unsigned int>());
+	printf("The parallel code ran in (thrust) %d ticks: %f secs.\n", 
+		clock() - tStart, ((double)(clock() - tStart)) / CLOCKS_PER_SEC);
+	printf("result %d \n\n", result1);
+	delete temp;
+
 	//--------------------------------------------------------------------------------
 	printf("START PARALLEL RECUCE \n");
 	cudaDeviceSynchronize();
-
-	GpuTimer timer;
-	timer.Start();
-	sdkStartTimer(&timerPro);
 	tStart = clock();	
-
-	cudaError_t cudaStatus = reduceWithCuda(&h_out, h_inCuda, arraySize);
-	timer.Stop();
-	sdkStopTimer(&timerPro);
+	cudaError_t cudaStatus = reduceWithCuda(&h_out, h_in, arraySize);
 
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "FAIL!");
 		exit(1);
 	}
-	printf("The custom code ran in: %f secs.\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-	printf("The custom code ran in (CUDA Timer): %f msecs.\n", timer.Elapsed());
-	reduceTime = sdkGetAverageTimerValue(&timerPro) * 1e-3;
-	printf("(CUDA PRO timer) Throughput = %.4f GB/s, Time = %.5f sec \n", 1.0e-9 * ((double)byteSize) / reduceTime, reduceTime);
+
+	printf("The parallel code ran in %d ticks: %f secs.\n", 
+		clock() - tStart, ((double)(clock() - tStart)) / CLOCKS_PER_SEC);
 	printf("result %d\n\n", h_out);
 
 	delete h_in;
 	free(h_inCuda);
-	sdkDeleteTimer(&timerPro);
 	
 	// cudaDeviceReset must be called before exiting in order for profiling and
 	// tracing tools such as Nsight and Visual Profiler to show complete traces.
@@ -114,10 +110,12 @@ unsigned int* GenerateRandomNumber(size_t n) {
 	checkCudaErrorsAndExit(cudaMalloc((void **)&devData, n * sizeof(unsigned int)));
 
 	/* Create pseudo-random number generator */
-	curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT);
+	curandStatus_t mess = curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT);
+	if (mess != CURAND_STATUS_SUCCESS) printf("Error at %s:%d\n", __FILE__, __LINE__);
 
 	/* Set seed */
-	curandSetPseudoRandomGeneratorSeed(gen, 1234ULL);
+	mess = curandSetPseudoRandomGeneratorSeed(gen, 1234ULL);
+	if (mess != CURAND_STATUS_SUCCESS) printf("Error at %s:%d\n", __FILE__, __LINE__);
 
 	/* Generate n floats on device */
 	curandGenerate(gen, devData, n);
@@ -127,7 +125,9 @@ unsigned int* GenerateRandomNumber(size_t n) {
 		cudaMemcpyDeviceToHost));
 
 	/* Cleanup */
-	curandDestroyGenerator(gen);
+	mess = curandDestroyGenerator(gen);
+	if (mess != CURAND_STATUS_SUCCESS) printf("Error at %s:%d\n", __FILE__, __LINE__); 
+
 	checkCudaErrorsAndExit(cudaFree(devData));
 
 	return hostData;

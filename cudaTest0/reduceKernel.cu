@@ -11,6 +11,8 @@ int atomicAdd(int* address, int val);
 #include <stdio.h>
 #include "GenericCUDA.h"
 #include "utils.h"
+#include "timer.h"
+#include "helper_timer.h"
 
 
 //!Seems to be the faster solution for reduce
@@ -107,6 +109,11 @@ cudaError_t reduceWithCuda(unsigned int *out, unsigned const int *in, unsigned i
 
 		transferDataHostToDev<unsigned int>(in, &d_in, &d_intermediate, size, blocks);
 
+		GpuTimer* timer = new GpuTimer();
+		////StopWatchWin *timerPro = new StopWatchWin();
+		timer->Start();
+		////timerPro->start();
+
 		// Launch a kernel on the GPU 
 		runKernel<unsigned int>(&d_intermediate, &d_in, reduceKernel1, maxThreads, blocks, maxThreads * sizeof(int));
 
@@ -124,6 +131,14 @@ cudaError_t reduceWithCuda(unsigned int *out, unsigned const int *in, unsigned i
 
 		checkCudaErrors(cudaMalloc((void **)&d_out, sizeof(int)));
 		runKernel<unsigned int>(&d_out, &d_intermediate, reduceKernel1, blocks, 1, blocks * sizeof(int));
+
+		timer->Stop();
+		////timerPro->stop();
+		printf("(CUDA Timer) The parallel code ran in: %f msecs (transferDataHostToDev not included).\n", timer->Elapsed());
+		////float reduceTime = timerPro->getAverageTime() * 1e-3;
+		////printf("(CUDA PRO timer) Throughput = %.4f GB/s, Time = %.5f sec \n", 
+		////	1.0e-9 * ((double)(size * sizeof(unsigned int))) / reduceTime, reduceTime);
+		////delete timerPro;
 
 		// Copy output vector from GPU buffer to host memory.
 		checkCudaErrors(cudaMemcpy(out, d_out, sizeof(int), cudaMemcpyDeviceToHost));
