@@ -121,10 +121,7 @@ cudaError_t reduceWithCuda(unsigned int *out, unsigned const int *in, unsigned i
 			blocks /= 1024;
 			checkCudaErrors(cudaMalloc((void **)&d_out, blocks * sizeof(int)));
 
-			runKernel<unsigned int>(&d_out, &d_intermediate, reduceKernel1, maxThreads, blocks, maxThreads * sizeof(int));
-				
-			//cudaFree(d_intermediate);
-			//checkCudaErrors(cudaMalloc((void **)&d_intermediate, blocks * sizeof(int)));
+			runKernel<unsigned int>(&d_out, &d_intermediate, reduceKernel1, maxThreads, blocks, maxThreads * sizeof(int));				
 			checkCudaErrors(cudaMemcpy(d_intermediate, d_out, blocks * sizeof(int), cudaMemcpyDeviceToDevice));
 			cudaFree(d_out);
 		}

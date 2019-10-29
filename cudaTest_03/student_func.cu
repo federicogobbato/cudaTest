@@ -251,5 +251,4 @@ void your_histogram_and_prefixsum(const float* const d_logLuminance,
 	cudaFree(d_maxValues);
 	cudaFree(d_minValue);
 	cudaFree(d_maxValue);
-	//cudaFree(bins);
 }

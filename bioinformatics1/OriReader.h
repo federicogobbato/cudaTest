@@ -4,6 +4,8 @@
 #include <map>
 #include <unordered_map>
 
+void FMFW(const char* const in, const int& sizeWord, unsigned int sizeIN);
+
 class OriReader
 {
 
@@ -13,13 +15,15 @@ public:
 	OriReader();
     ~OriReader();
 
-    int PatternCount(const std::string& Text, const std::string& Pattern);
+    int PatternCount(const std::string& text, const std::string& pattern);
 
-    void GenerateFrequencyMap(const std::string& Text, const int& k);
+	std::vector<int> PatternPositions(const std::string & Text, const std::string & Pattern);
 
-	void PrintFrequencyMap(FrequencyMap* = nullptr);
+    void FindMostFrequentWordInMap(const char* const Text, const int& k);
 
-	void FindMostFrequentWord();
+	void FindMostFrequentWordInMapWithCuda(const char* const Text, const int& k);
+
+	std::unique_ptr<char> ReverseComplement(const char* text);
 
 private:
 
