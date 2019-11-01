@@ -96,6 +96,8 @@ cudaError_t reduceWithCuda(unsigned int *out, unsigned const int *in, unsigned i
 	unsigned int* d_intermediate = 0;
 	unsigned int* d_out = 0;
 	cudaError_t cudaStatus = cudaSuccess;
+	GpuTimer* timer = new GpuTimer();
+	////StopWatchWin *timerPro = new StopWatchWin();
 
 	try
 	{
@@ -109,8 +111,6 @@ cudaError_t reduceWithCuda(unsigned int *out, unsigned const int *in, unsigned i
 
 		transferDataHostToDev<unsigned int>(in, &d_in, &d_intermediate, size, blocks);
 
-		GpuTimer* timer = new GpuTimer();
-		////StopWatchWin *timerPro = new StopWatchWin();
 		timer->Start();
 		////timerPro->start();
 
@@ -142,15 +142,17 @@ cudaError_t reduceWithCuda(unsigned int *out, unsigned const int *in, unsigned i
 	}
 	catch (cudaError_t ex)
 	{
-		cudaStatus = ex;
 		cudaFree(d_in);
 		cudaFree(d_out);
 		cudaFree(d_intermediate);
+		delete timer;
+		return ex;
 	};
 
 	cudaFree(d_in);
 	cudaFree(d_out);
 	cudaFree(d_intermediate);
+	delete timer;
 
 	return cudaStatus;
 }

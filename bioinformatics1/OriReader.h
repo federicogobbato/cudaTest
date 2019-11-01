@@ -4,7 +4,8 @@
 #include <map>
 #include <unordered_map>
 
-void FMFW(const char* const in, const int& sizeWord, unsigned int sizeIN);
+void FMFW1(const char* const in, const int& sizeWord, unsigned int sizeIN);
+void FMFW2(const char* const in, const int& sizeWord, unsigned int sizeIN);
 
 class OriReader
 {

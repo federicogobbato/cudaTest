@@ -36,10 +36,12 @@ ATTGTTAATTCTCTTGCCTCGACTCATAGCCATGATGAGCTCTTGATCATGTTTCCTTAACCCTCTATTTTTTACGGAAG
 		oriFile.close();
 
 		// Find the most frequent k-mers inside Ori region
+		m_Reader->FindMostFrequentWordInMap(m_Ori, 9);
 		m_Reader->FindMostFrequentWordInMapWithCuda(m_Ori, 9);
 
 		//// Find the most frequent k-mers inside the entirely Genome
 		//m_Reader->FindMostFrequentWordInMap(m_Genome, 9);
+		//m_Reader->FindMostFrequentWordInMapWithCuda(m_Genome, 9);
 
 		//// Find how many times and the positions inside the arrray of k-mer inside the Genome
 		//cout << m_Reader->PatternCount(m_Genome, "CTTGATCAT") << endl;

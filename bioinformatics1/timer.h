@@ -36,7 +36,7 @@ public:
 	{
 		float elapsed;
 		cudaEventSynchronize(stop);
-		cudaEventElapsedTime(&elapsed, start, stop);
+        cudaEventElapsedTime(&elapsed, start, stop);
 		return elapsed;
 	}
 };

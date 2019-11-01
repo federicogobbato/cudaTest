@@ -2,6 +2,10 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <time.h>
+
+#include "cuda_runtime.h"
+#include "utils.h"
 
 
 typedef std::map<std::string, int> FrequencyMap;
@@ -49,11 +53,11 @@ bool value_comparer(FrequencyMap::value_type &i1, FrequencyMap::value_type &i2)
 
 void OriReader::FindMostFrequentWordInMap(const char* const text, const int& k)
 {    
-	m_FrequencyMap->clear();
+	clock_t tStart = clock();
 
+	m_FrequencyMap->clear();
 	const int size = strlen(text);
 
-	FMFW(text, k, size);
 	std::string textString = text;
     for (int i = 0; i < size - k + 1; ++i)
     {
@@ -68,26 +72,28 @@ void OriReader::FindMostFrequentWordInMap(const char* const text, const int& k)
 
 	FrequencyMap::iterator itor = std::max_element(m_FrequencyMap->begin(), m_FrequencyMap->end(), value_comparer);
 
-	std::cout << itor->second << std::endl;
+	//std::cout << itor->second << std::endl;
 
 	std::vector<std::string> mostFrequentWords;
 	for (auto &word : *m_FrequencyMap) {
 		if (word.second == itor->second) {
 			mostFrequentWords.push_back(word.first);
+			std::cout << word.first << std::endl;
 		}
 	}
-
-	for (int i = 0; i < mostFrequentWords.size(); i++)
-	{
-		std::cout << mostFrequentWords[i] << std::endl;
-	}
+	printf("The serial FMFW ran in %d ticks: %f secs.\n\n", clock() - tStart, ((double)(clock() - tStart)) / CLOCKS_PER_SEC);
 }
 
 void OriReader::FindMostFrequentWordInMapWithCuda(const char * const text, const int & k)
 {
+	checkCudaErrors(cudaDeviceSynchronize());
+
 	const int size = strlen(text);
 
-	FMFW(text, k, size);
+	FMFW1(text, k, size);
+
+	FMFW2(text, k, size);
+	
 }
 
 
