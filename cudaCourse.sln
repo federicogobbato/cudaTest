@@ -11,7 +11,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cudaTest_02", "cudaTest_02\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cudaTest_03", "cudaTest_03\cudaTest_03.vcxproj", "{C3A4F365-10D6-4C75-90CE-F9743C888A55}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bioinformatics1", "bioinformatics1\bioinformatics1.vcxproj", "{3B93CC68-387F-428A-9505-6B397CEEEA8A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bio1", "bio1\bio1.vcxproj", "{BC560606-E943-45F2-B0F9-6BCC3F04BB66}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,10 +27,10 @@ Global
 		{8FC04634-42E4-486A-85C8-3F1269D68976}.Release|x64.ActiveCfg = Release|x64
 		{C3A4F365-10D6-4C75-90CE-F9743C888A55}.Debug|x64.ActiveCfg = Debug|x64
 		{C3A4F365-10D6-4C75-90CE-F9743C888A55}.Release|x64.ActiveCfg = Release|x64
-		{3B93CC68-387F-428A-9505-6B397CEEEA8A}.Debug|x64.ActiveCfg = Debug|x64
-		{3B93CC68-387F-428A-9505-6B397CEEEA8A}.Debug|x64.Build.0 = Debug|x64
-		{3B93CC68-387F-428A-9505-6B397CEEEA8A}.Release|x64.ActiveCfg = Release|x64
-		{3B93CC68-387F-428A-9505-6B397CEEEA8A}.Release|x64.Build.0 = Release|x64
+		{BC560606-E943-45F2-B0F9-6BCC3F04BB66}.Debug|x64.ActiveCfg = Debug|x64
+		{BC560606-E943-45F2-B0F9-6BCC3F04BB66}.Debug|x64.Build.0 = Debug|x64
+		{BC560606-E943-45F2-B0F9-6BCC3F04BB66}.Release|x64.ActiveCfg = Release|x64
+		{BC560606-E943-45F2-B0F9-6BCC3F04BB66}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
