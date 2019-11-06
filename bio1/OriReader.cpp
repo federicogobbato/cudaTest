@@ -1,3 +1,5 @@
+#pragma once
+
 #include "OriReader.h"
 #include <iostream>
 #include <algorithm>
@@ -90,7 +92,8 @@ void OriReader::FindMostFrequentWordInMapWithCuda(const char * const text, const
 
 	const int size = strlen(text);
 
-	FMFW1(text, k, size);	
+	FMFW2(text, k, size);	
+	FMFW1(text, k, size);
 }
 
 
