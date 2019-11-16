@@ -38,61 +38,32 @@ __global__ void FindAllWords2(Word *d_out, const char *d_in, int size, int sizeW
 	}
 }
 
+__global__ void FindAllWordsShared2(Word *d_out, const char *d_in, int size, int sizeWord) {
 
-////__global__ void FindAllWords2(wordKeys **d_out, const char *d_in, int size) {
-////
-////	int id = threadIdx.x + blockDim.x * blockIdx.x;
-////
-////	if (id < size) {
-////		d_out[id]->k1 = d_in[id];
-////		d_out[id]->k2 = d_in[id + 1];
-////		d_out[id]->k3 = d_in[id + 2];
-////		d_out[id]->k4 = d_in[id + 3];
-////		d_out[id]->k5 = d_in[id + 4];
-////		d_out[id]->k6 = d_in[id + 5];
-////		d_out[id]->k7 = d_in[id + 6];
-////		d_out[id]->k8 = d_in[id + 7];
-////		d_out[id]->k9 = d_in[id + 8];
-////	}
-////}
-////
-////struct sort_wordKeys {
-////	__host__ __device__ bool operator()(wordKeys &keys1, wordKeys &keys2) {
-////		if (keys1.k1 < keys2.k1) return true;
-////		if (keys1.k1 > keys2.k1) return false;
-////		if (keys1.k2 < keys2.k2) return true;
-////		if (keys1.k2 > keys2.k2) return false;
-////		if (keys1.k3 < keys2.k3) return true;
-////		if (keys1.k3 > keys2.k3) return false;
-////		if (keys1.k4 < keys2.k4) return true;
-////		if (keys1.k4 > keys2.k4) return false;
-////		if (keys1.k5 < keys2.k5) return true;
-////		if (keys1.k5 > keys2.k5) return false;
-////		if (keys1.k6 < keys2.k6) return true;
-////		if (keys1.k6 > keys2.k6) return false;
-////		if (keys1.k7 < keys2.k7) return true;
-////		if (keys1.k7 > keys2.k7) return false;
-////		if (keys1.k8 < keys2.k8) return true;
-////		if (keys1.k8 > keys2.k8) return false;
-////		if (keys1.k9 < keys2.k9) return true;
-////		return false;
-////	}
-////};
-////
-////struct equal_wordKeys {
-////	__host__ __device__ bool operator()(wordKeys keys1, wordKeys keys2) {
-////		if ((keys1.k1 == keys2.k1) && 
-////			(keys1.k2 == keys2.k2) &&
-////			(keys1.k3 == keys2.k3) &&
-////			(keys1.k4 == keys2.k4) && 
-////			(keys1.k5 == keys2.k5) &&
-////			(keys1.k6 == keys2.k6) && 
-////			(keys1.k7 == keys2.k7) &&
-////			(keys1.k8 == keys2.k8) &&
-////			(keys1.k9 == keys2.k9)) return true;
-////		return false;
-////	}
-////};
+	const int RADIUS = sizeWord;
+
+	int id = threadIdx.x + blockDim.x * blockIdx.x;
+	int tindex = threadIdx.x;
+
+	extern __shared__ char temp[];
+	temp[tindex] = d_in[id];
+	if (threadIdx.x < RADIUS) {
+		temp[tindex + blockDim.x] = d_in[id + blockDim.x];
+	}
+	__syncthreads();
+
+	if (id < size)
+	{
+		char newWord[10];
+		for (int i = 0; i < sizeWord - 1; i++)
+		{
+			newWord[i] = temp[tindex + i];
+		}
+		newWord[sizeWord - 1] = '\0';
+
+		memcpy(d_out[id].keys, &newWord, 10);
+	}
+}
 
 struct charArrayCompare {
 	__host__ __device__ bool operator()(const char* o1, const char* o2) {
@@ -154,28 +125,27 @@ void FMFW2(const char* const in, const int& sizeWord, const unsigned int size) {
 	clock_t tStart = clock();
 	clock_t tDelay;
 	int Delay = 0;
+	cudaError_t cudaError = cudaSuccess;
 
 	const int N_WORDS = size - sizeWord + 1;
 	const int ARRAY_BYTES = size * sizeof(char);
 	const int SIZE_WORD = sizeWord + 1;
-	const int WORD_BYTES = SIZE_WORD * sizeof(char);
 
 	char* d_in = nullptr;
 	Word* h_listWords = new Word[N_WORDS];
 	Word* d_listWords;
-	//Word* h_mostFrequentWords = nullptr;
-	int N_MFwords = 0;
 
 	checkCudaErrorsAndExit(cudaSetDevice(0));
-	cudaError_t cudaError = cudaSuccess;
 
 	int maxThreads = size;
 	int blocks = 1;
 
-	if (size > 1024) {
-		maxThreads = 1024;
+	if (size > 256) {
+		maxThreads = 256;
 		blocks = std::ceil((float)size / maxThreads);
 	}
+
+	std::cout << "max thread per block: " << maxThreads << std::endl;
 
 	try {
 		checkCudaErrors(cudaMalloc((void **)&d_in, ARRAY_BYTES));
@@ -186,11 +156,10 @@ void FMFW2(const char* const in, const int& sizeWord, const unsigned int size) {
 
 		checkCudaErrors(cudaGetLastError());
 
-		FindAllWords2 <<<blocks, maxThreads>>> (d_listWords, d_in, N_WORDS, sizeWord+1);
+		FindAllWordsShared2 <<<blocks, maxThreads, (maxThreads + sizeWord) * sizeof(char) >>> (d_listWords, d_in, N_WORDS, SIZE_WORD);
+		//FindAllWords2 <<<blocks, maxThreads>>> (d_listWords, d_in, N_WORDS, sizeWord+1);
 		checkCudaErrors(cudaGetLastError());
 		checkCudaErrors(cudaDeviceSynchronize());
-
-		//checkCudaErrors(cudaMemcpy(h_mostFrequentWords, d_listWords, N_WORDS * sizeof(Word), cudaMemcpyDeviceToHost));
 
 		//!Sort and reduce with Thrust.........
 		thrust::device_ptr<Word> dev_ptr(d_listWords);
@@ -212,7 +181,7 @@ void FMFW2(const char* const in, const int& sizeWord, const unsigned int size) {
 
 		thrust::device_vector<int>::iterator d_MostFrequent = thrust::max_element(d_Frequency.begin(), d_Frequency.end());
 
-		tDelay = clock();
+		////tDelay = clock();
 
 		//!Print most frequent words
 		thrust::device_vector<Word> d_mostFrequentWords(rsize);
@@ -232,7 +201,7 @@ void FMFW2(const char* const in, const int& sizeWord, const unsigned int size) {
 			printf("%s \n", h_mostFrequentWords[i].keys);
 		}
 
-		Delay = clock() - tDelay;
+		////Delay = clock() - tDelay;
 	}
 	catch (cudaError_t e)
 	{
@@ -247,10 +216,11 @@ FreeMemory:
 	delete[] h_listWords;
 
 	if (cudaError == cudaSuccess) {
-		printf("The parallel FMFW2 ran in %d ticks: %f secs.\n", clock() - tStart, ((double)(clock() - tStart)) / CLOCKS_PER_SEC);
-		printf("Delay code is %d ticks: %f secs.\n\n", Delay, (double)Delay / CLOCKS_PER_SEC);
+		printf("The parallel FMFW2 ran in %d ticks: %f secs.\n\n", clock() - tStart, ((double)(clock() - tStart)) / CLOCKS_PER_SEC);
+		////printf("Delay code is %d ticks: %f secs.\n\n", Delay, (double)Delay / CLOCKS_PER_SEC);
 	}
 }
+
 
 
 
@@ -314,11 +284,13 @@ __global__ void FreeWords(char **d_in, int size) {
 	}
 }
 
+
 void FMFW1(const char* const in, const int& sizeWord, const unsigned int size) {
 
 	clock_t tStart = clock();
 	clock_t tDelay;
 	int Delay = 0;
+	cudaError_t cudaError = cudaSuccess;
 
 	const int SIZE_WORD = sizeWord + 1;
 	const int N_WORDS = size - SIZE_WORD;
@@ -331,32 +303,30 @@ void FMFW1(const char* const in, const int& sizeWord, const unsigned int size) {
 	int N_MFwords = 0;
 
 	checkCudaErrorsAndExit(cudaSetDevice(0));
-	cudaError_t cudaError = cudaSuccess;
 
 	int maxThreads = size;
 	int blocks = 1;
 
-	if (size > 1024) {
-		maxThreads = 1024;
+	if (size > 256) {
+		maxThreads = 256;
 		blocks = std::ceil((float)size / maxThreads);
 	}
 
 	try {
+
 		checkCudaErrors(cudaMalloc((void **)&d_in, ARRAY_BYTES));
 		checkCudaErrors(cudaMemcpy(d_in, in, ARRAY_BYTES, cudaMemcpyHostToDevice));
 
 		checkCudaErrors(cudaMalloc((void **)&d_listWords, N_WORDS * sizeof(char*)));
-
 		checkCudaErrors(cudaGetLastError());
 
 		tDelay = clock();
-
 		//FindAllWordsShared1 <<<blocks, maxThreads, (maxThreads + sizeWord) * sizeof(char)>>> (d_listWords, d_in, N_WORDS, SIZE_WORD);
 		FindAllWords1 <<<blocks, maxThreads>>> (d_listWords, d_in, N_WORDS, SIZE_WORD);
 		checkCudaErrors(cudaGetLastError());
 		checkCudaErrors(cudaDeviceSynchronize());
-
 		Delay = clock() - tDelay;
+
 		//!Sort and reduce with Thrust.........
 		thrust::device_ptr<char*> dev_ptr(d_listWords);
 

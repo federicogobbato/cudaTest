@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utils.h"
+#include "timer.h"
 #include <type_traits>
 
 template <class T>
@@ -38,17 +39,12 @@ void runKernel(T **d_out, T **d_in, void(*kernel)(T*, const T*),
 
 template <class T>
 	//class = typename std::enable_if<std::is_integral<T>::value || std::is_floating_point<T>::value>::type>
-void transferDataHostToDev(const T *in, T **d_in, T **d_out, unsigned int sizeIN, unsigned int sizeOUT = 0)
+void transferDataHostToDev(const T *in, T **d_in, T **d_out, unsigned int sizeIN, unsigned int sizeOUT = 0, GpuTimer* timer = nullptr)
 {
 	const int ARRAY_BYTES = sizeIN * sizeof(T);
 	cudaError_t cudaStatus;
 
-	// Choose which GPU to run on, change this on a multi-GPU system.
-	cudaStatus = cudaSetDevice(0);
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?");
-		throw cudaStatus;
-	}
+	if (timer) timer->Start();
 
 	// Allocate GPU buffers for 2 vectors (one input, one output)    .
 	cudaStatus = cudaMalloc(d_in, ARRAY_BYTES);
@@ -63,10 +59,17 @@ void transferDataHostToDev(const T *in, T **d_in, T **d_out, unsigned int sizeIN
 		throw cudaStatus;
 	}
 
+	cudaStatus = cudaMemset(*d_out, 0, sizeOUT > 0 ? sizeOUT * sizeof(T) : ARRAY_BYTES);
+	if (cudaStatus != cudaSuccess) {
+		fprintf(stderr, "cudaMemset d_out failed!");
+		throw cudaStatus;
+	}
+
 	// Copy input vectors from host memory to GPU buffers.
 	cudaStatus = cudaMemcpy(*d_in, in, ARRAY_BYTES, cudaMemcpyHostToDevice);
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "cudaMemcpy on d_in failed!");
 		throw cudaStatus;
 	}
+	if (timer) timer->Stop();
 }

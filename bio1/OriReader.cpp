@@ -86,17 +86,6 @@ void OriReader::FindMostFrequentWordInMap(const char* const text, const int& k)
 	printf("The serial FMFW ran in %d ticks: %f secs.\n\n", clock() - tStart, ((double)(clock() - tStart)) / CLOCKS_PER_SEC);
 }
 
-void OriReader::FindMostFrequentWordInMapWithCuda(const char * const text, const int & k)
-{
-	checkCudaErrors(cudaDeviceSynchronize());
-
-	const int size = strlen(text);
-
-	FMFW2(text, k, size);	
-	FMFW1(text, k, size);
-}
-
-
 std::unique_ptr<char> OriReader::ReverseComplement(const char* const text)
 {
 	const int size = strlen(text);
