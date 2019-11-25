@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cudaTest_03", "cudaTest_03\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bio1", "bio1\bio1.vcxproj", "{BC560606-E943-45F2-B0F9-6BCC3F04BB66}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testing", "testing\testing.vcxproj", "{89BF55E5-39A7-4B44-9787-1B1DDD4A7992}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,7 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{A53ECDD0-2ED0-4F6C-9782-D3B2B7A0ABA6}.Debug|x64.ActiveCfg = Debug|x64
 		{A53ECDD0-2ED0-4F6C-9782-D3B2B7A0ABA6}.Release|x64.ActiveCfg = Release|x64
+		{A53ECDD0-2ED0-4F6C-9782-D3B2B7A0ABA6}.Release|x64.Build.0 = Release|x64
 		{75BE0312-668E-4776-AFD2-227A92A10CC2}.Debug|x64.ActiveCfg = Debug|x64
 		{75BE0312-668E-4776-AFD2-227A92A10CC2}.Release|x64.ActiveCfg = Release|x64
 		{8FC04634-42E4-486A-85C8-3F1269D68976}.Debug|x64.ActiveCfg = Debug|x64
@@ -31,6 +34,10 @@ Global
 		{BC560606-E943-45F2-B0F9-6BCC3F04BB66}.Debug|x64.Build.0 = Debug|x64
 		{BC560606-E943-45F2-B0F9-6BCC3F04BB66}.Release|x64.ActiveCfg = Release|x64
 		{BC560606-E943-45F2-B0F9-6BCC3F04BB66}.Release|x64.Build.0 = Release|x64
+		{89BF55E5-39A7-4B44-9787-1B1DDD4A7992}.Debug|x64.ActiveCfg = Debug|x64
+		{89BF55E5-39A7-4B44-9787-1B1DDD4A7992}.Debug|x64.Build.0 = Debug|x64
+		{89BF55E5-39A7-4B44-9787-1B1DDD4A7992}.Release|x64.ActiveCfg = Release|x64
+		{89BF55E5-39A7-4B44-9787-1B1DDD4A7992}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
